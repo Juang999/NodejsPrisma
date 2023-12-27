@@ -4,9 +4,18 @@
  * Module dependencies.
  */
 
-var app = require('../app');
-var debug = require('debug')('nodejsprisma:server');
-var http = require('http');
+import app from "../app.js"
+import debugPackage from "debug"
+import http from "http"
+
+var debug = debugPackage('nodejsprisma:server');
+
+/**
+ * Get host from environment and store in Express.
+ */
+
+var host = (process.env.HOST) ? process.env.HOST : 'localhost';
+app.set('host', host);
 
 /**
  * Get port from environment and store in Express.
@@ -25,7 +34,9 @@ var server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
+server.listen(port, () => {
+  console.log(`listening to http://${host}:${port}`)
+});
 server.on('error', onError);
 server.on('listening', onListening);
 
