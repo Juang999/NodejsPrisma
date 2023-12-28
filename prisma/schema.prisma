@@ -16,10 +16,18 @@ model sample {
 }
 
 model Customer {
-  id BigInt @id
+  id Int @id @default(autoincrement())
   name String
   email String
   phone String
 
   @@map("customers")
+}
+
+model AddressCustomer {
+  id Int @id @default(autoincrement())
+  customer_id Int
+  customer_address String
+
+  @@map("address_customers")
 }
