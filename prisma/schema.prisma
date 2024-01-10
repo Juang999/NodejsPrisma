@@ -20,14 +20,26 @@ model Customer {
   name String
   email String
   phone String
+  address_customer AddressCustomer?
+  phone_number PhoneNumber[]
 
   @@map("customers")
 }
 
 model AddressCustomer {
   id Int @id @default(autoincrement())
-  customer_id Int
+  customer Customer @relation(fields: [customer_id], references: [id])
+  customer_id Int @unique
   customer_address String
 
   @@map("address_customers")
+}
+
+model PhoneNumber {
+  id Int @id @default(autoincrement())
+  customer Customer @relation(fields: [customer_id], references: [id])
+  customer_id Int
+  phone_number Int
+
+  @@map("phone_numbers")
 }

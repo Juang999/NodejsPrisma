@@ -2,7 +2,19 @@ import {prismaClient} from "../../prisma/PrismaClient.js"
 
 class CustomerController {
     getCustomer (req, res) {
-        prismaClient.customer.findMany()
+        let page = (req.query.page) ? parseInt(req.query.page) - 1 : 0
+
+        prismaClient.customer.findMany({
+            include: {
+                address_customer: true,
+                phone_number: true
+            },
+            orderBy: [
+                {
+                    id: 'desc'
+                }
+            ]
+        })
             .then(result => {
                 res.status(200)
                     .json({
@@ -12,6 +24,7 @@ class CustomerController {
                     });
             })
             .catch(err => {
+                console.log(err.message)
                 res.status(400)
                     .json({
                         status: 'failed',
@@ -21,30 +34,39 @@ class CustomerController {
             });
     }
 
-    storeCustomer (req, res) {
-        prismaClient.customer.create({
-            data: {
-                name: req.body.name,
-                email: req.body.email,
-                phone: req.body.phone
-            }
-        })
-        .then(result => {
+    async storeCustomer (req, res) {
+        try {
+            let customer = await prismaClient.customer.create({
+                data: {
+                    name: req.body.name,
+                    email: req.body.email,
+                    phone: req.body.phone,
+                    address_customer: {
+                        create: {
+                            customer_address: req.body.address
+                        }
+                    }
+                },
+                include: {
+                    address_customer: true
+                }
+            })
+
             res.status(200)
                 .json({
                     status: 'success',
-                    data: result,
+                    data: customer,
                     error: null
                 })
-        })
-        .catch(err => {
-            res.status(400)
+        } catch (error) {
+            console.log(error.message)
+            res.status(400)   
                 .json({
                     status: 'failed',
                     data: null,
-                    error: err.message
+                    error: error.message
                 })
-        })
+        }
     }
 
     updateCustomer (req, res) {
@@ -101,8 +123,36 @@ class CustomerController {
     }
 
     createBulkCustomer (req, res) {
-        let dataBulkCustomer = JSON.parse(req.body.data_customers)
-        console.log(dataBulkCustomer)
+        let bulkDataPhoneNumber = JSON.parse(req.body.data_customers)
+
+        let readyToInput = []
+
+        for (const dataPhoneNumber of bulkDataPhoneNumber) {
+            readyToInput.push({
+                customer_id: parseInt(dataPhoneNumber['customer_id']),
+                phone_number: parseInt(dataPhoneNumber['phone_number']),
+            })
+        }
+
+        prismaClient.phoneNumber.createMany({data: readyToInput})
+        .then(result => {
+            console.log(result)
+            res.status(200)
+                .json({
+                    status: 'success',
+                    data: result,
+                    error: null
+                })
+        })
+        .catch(err => {
+            console.log(err.message)
+            res.status(400)
+                .json({
+                    status: 'failed',
+                    data: null,
+                    error: err.message
+                })
+        })
     }
 }
 
